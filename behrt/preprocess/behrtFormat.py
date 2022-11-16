@@ -11,10 +11,11 @@ config= {
     'output': '',  # path to save formated file
     'col_name': ''  # column name for ICD/Med code
 }
-
+# construct parquet datafames which have the same schema
 diagnoses = read_parquet(spark.sqlContext, config['diagnoses']).select(['patid','eventdate',config['col_name']]).na.drop().select(['patid','eventdate', config['col_name']])
+# diagnoses: patid, eventdate, code
 demographic = read_parquet(spark.sqlContext, config['demographic'])
-
+# demographic: patid, age
 diagnoses = diagnoses.na.drop()
 diagnoses = diagnoses.dropDuplicates()
 
@@ -41,3 +42,5 @@ diagnoses = diagnoses.withColumn(config['col_name'], F.collect_list(config['col_
 
 diagnoses = EHR(diagnoses).array_flatten(config['col_name']).array_flatten('age')
 diagnoses.write.parquet(config['output'])
+
+# we need to construct a dataframe with code and age columns
