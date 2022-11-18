@@ -1,15 +1,18 @@
 from common.spark import spark_init, read_parquet, read_txt
-from CPRD.tabel import EHR
+#from CPRD.tabel import EHR
 import pyspark.sql.functions as F
 from pyspark.sql import Window
+
+from os.path import join
+
 
 spark = spark_init()
 
 config= {
-    'diagnoses': '',  # data path for diagnoses/medication
-    'demographic': '',  # data path for demographic information
-    'output': '',  # path to save formated file
-    'col_name': ''  # column name for ICD/Med code
+    'diagnoses': join('data', 'raw' ,'example_diagnoses.csv'),  # data path for diagnoses/medication
+    'demographic': join('data', 'raw', 'example_demographic.csv'),  # data path for demographic information
+    'output': join('data', 'formatted' ,'example_diagnoses.csv'),  # path to save formated file
+    'col_name': 'icd10'  # column name for ICD/Med code
 }
 # construct parquet datafames which have the same schema
 diagnoses = read_parquet(spark.sqlContext, config['diagnoses']).select(['patid','eventdate',config['col_name']]).na.drop().select(['patid','eventdate', config['col_name']])

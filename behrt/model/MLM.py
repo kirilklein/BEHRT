@@ -1,7 +1,8 @@
 import torch.nn as nn
-import pytorch_pretrained_bert as Bert
+from transformers import BertModel, BertConfig
 import numpy as np
 import torch
+from transformers.models import bert
 
 class BertEmbeddings(nn.Module):
     """Construct the embeddings from word, segment, age
@@ -15,7 +16,7 @@ class BertEmbeddings(nn.Module):
         self.posi_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size). \
             from_pretrained(embeddings=self._init_posi_embedding(config.max_position_embeddings, config.hidden_size))
 
-        self.LayerNorm = Bert.modeling.BertLayerNorm(config.hidden_size, eps=1e-12)
+        self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=1e-12)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, word_ids, age_ids=None, seg_ids=None, posi_ids=None, age=True):
@@ -62,12 +63,12 @@ class BertEmbeddings(nn.Module):
         return torch.tensor(lookup_table)
 
 
-class BertModel(Bert.modeling.BertPreTrainedModel):
+class BertModel(bert.BertPreTrainedModel):
     def __init__(self, config):
         super(BertModel, self).__init__(config)
         self.embeddings = BertEmbeddings(config=config)
-        self.encoder = Bert.modeling.BertEncoder(config=config)
-        self.pooler = Bert.modeling.BertPooler(config)
+        self.encoder = bert.BertEncoder(config=config)
+        self.pooler = bert.BertPooler(config)
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, age_ids=None, seg_ids=None, posi_ids=None, attention_mask=None,
@@ -107,11 +108,11 @@ class BertModel(Bert.modeling.BertPreTrainedModel):
         return encoded_layers, pooled_output
 
 
-class BertForMaskedLM(Bert.modeling.BertPreTrainedModel):
+class BertForMaskedLM(bert.BertPreTrainedModel):
     def __init__(self, config):
         super(BertForMaskedLM, self).__init__(config)
         self.bert = BertModel(config)
-        self.cls = Bert.modeling.BertOnlyMLMHead(config, self.bert.embeddings.word_embeddings.weight)
+        self.cls = bert.BertOnlyMLMHead(config, self.bert.embeddings.word_embeddings.weight)
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, age_ids=None, seg_ids=None, posi_ids=None, attention_mask=None, masked_lm_labels=None):

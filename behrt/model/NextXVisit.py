@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
-import pytorch_pretrained_bert as Bert
+from transformers import BertModel, BertConfig
 import numpy as np
+from transformers.models import bert
 
 
 class BertEmbeddings(nn.Module):
@@ -34,7 +35,7 @@ class BertEmbeddings(nn.Module):
             self.posi_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size). \
             from_pretrained(embeddings=self._init_posi_embedding(config.max_position_embeddings, config.hidden_size))
 
-        self.LayerNorm = Bert.modeling.BertLayerNorm(config.hidden_size, eps=1e-12)
+        self.LayerNorm = torch.nn.LayerNorm(config.hidden_size, eps=1e-12)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, word_ids, age_ids, seg_ids, posi_ids):
@@ -79,12 +80,12 @@ class BertEmbeddings(nn.Module):
         return torch.tensor(lookup_table)
 
 
-class BertModel(Bert.modeling.BertPreTrainedModel):
+class BertModel(bert.BertPreTrainedModel):
     def __init__(self, config, feature_dict):
         super(BertModel, self).__init__(config)
         self.embeddings = BertEmbeddings(config=config, feature_dict=feature_dict)
-        self.encoder = Bert.modeling.BertEncoder(config=config)
-        self.pooler = Bert.modeling.BertPooler(config)
+        self.encoder = bert.BertEncoder(config=config)
+        self.pooler = bert.BertPooler(config)
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, age_ids, seg_ids, posi_ids, attention_mask,
@@ -116,7 +117,7 @@ class BertModel(Bert.modeling.BertPreTrainedModel):
         return encoded_layers, pooled_output
 
 
-class BertForMultiLabelPrediction(Bert.modeling.BertPreTrainedModel):
+class BertForMultiLabelPrediction(bert.BertPreTrainedModel):
     def __init__(self, config, num_labels, feature_dict):
         super(BertForMultiLabelPrediction, self).__init__(config)
         self.num_labels = num_labels
