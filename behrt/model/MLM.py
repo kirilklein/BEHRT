@@ -1,5 +1,5 @@
 import torch.nn as nn
-from transformers import BertModel, BertConfig
+from transformers import BertModel
 import numpy as np
 import torch
 from transformers.models import bert

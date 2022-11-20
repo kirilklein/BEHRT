@@ -23,16 +23,16 @@ diagnoses = diagnoses.na.drop()
 diagnoses = diagnoses.dropDuplicates()
 
 # demographic data
-demographic = demographic.select(['patid', 'yob'])
+demographic = demographic.select(['patid', 'dob'])
 diagnoses= diagnoses.join(demographic, diagnoses.patid == demographic.patid, 'inner').drop(demographic.patid)
-diagnoses = EHR(diagnoses).cal_age('eventdate', 'yob', year=False).select(['patid', 'eventdate', 'age', config['col_name'], 'yob'])
+diagnoses = EHR(diagnoses).cal_age('eventdate', 'dob', year=False).select(['patid', 'eventdate', 'age', config['col_name'], 'dob'])
 diagnoses = diagnoses.dropDuplicates()
 
 # set age and code to string
 diagnoses = EHR(diagnoses).set_col_to_str('age').set_col_to_str(config['col_name'])
 
 # group by date
-diagnoses = diagnoses.groupby(['patid', 'eventdate']).agg(F.collect_list(config['col_name']).alias(config['col_name']), F.collect_list('age').alias('age'), F.first('yob').alias('yob'))
+diagnoses = diagnoses.groupby(['patid', 'eventdate']).agg(F.collect_list(config['col_name']).alias(config['col_name']), F.collect_list('age').alias('age'), F.first('dob').alias('dob'))
 diagnoses = EHR(diagnoses).array_add_element(config['col_name'], 'SEP')
 
 # add extra age to fill the gap of sep
